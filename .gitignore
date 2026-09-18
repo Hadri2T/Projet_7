@@ -11,6 +11,9 @@ README_travail.md
 *.pt
 *.pth
 
+# Embeddings (régénérés par le notebook 1)
+*.npy
+
 # Python / Jupyter
 __pycache__/
 .ipynb_checkpoints/
