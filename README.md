@@ -61,7 +61,31 @@ Chaque modèle est évalué avec trois métriques complémentaires :
 | **F1-score** | La moyenne harmonique de la précision et du rappel. Elle pénalise un modèle qui rate des cas positifs ou qui multiplie les fausses alertes. |
 | **AUC** | L'aire sous la courbe ROC : la capacité du modèle à classer les images par probabilité, indépendamment du seuil de décision (1 = parfait, 0,5 = hasard). |
 
-Les trois sont suivies tout au long du projet. Le contexte médical oriente toutefois l'interprétation : toutes les erreurs n'ont pas le même coût. Un **faux négatif**, c'est-à-dire une tumeur non détectée, est bien plus grave qu'un faux positif, qui entraîne seulement une vérification supplémentaire par un radiologue. L'accuracy ne fait pas cette distinction, alors que le F1-score intègre le rappel. La conclusion sur la métrique la plus pertinente sera tirée à l'issue des expériences.
+Les trois sont suivies tout au long du projet. Le contexte médical oriente toutefois l'interprétation : toutes les erreurs n'ont pas le même coût. Un **faux négatif**, c'est-à-dire une tumeur non détectée, est bien plus grave qu'un faux positif, qui entraîne seulement une vérification supplémentaire par un radiologue. L'accuracy ne fait pas cette distinction, alors que le F1-score intègre le rappel : c'est donc lui qui sert de métrique de décision, l'AUC servant à juger la qualité du classement indépendamment du seuil.
+
+## Résultats
+
+Les quatre modèles sont évalués sur les **mêmes 29 images de test**, annotées par des radiologues et jamais utilisées, ni pour le clustering, ni pour l'entraînement, ni pour le réglage des hyperparamètres.
+
+| Modèle | Entraînement | F1 en validation croisée | F1 sur le test | AUC |
+| --- | --- | --- | --- | --- |
+| **A — supervisé** | 67 images expertes | 0,765 ± 0,062 | 0,765 | 0,810 |
+| **B0 — faible seul** | 1 214 labels issus du clustering | — | 0,800 | 0,905 |
+| **B — semi-supervisé** | B0, puis affinage sur les 67 images | 0,925 ± 0,068 | 0,857 | 0,905 |
+| **C — semi-supervisé filtré** | Les 70 % de labels faibles les plus sûrs, puis affinage | 0,920 ± 0,025 | 0,929 | 0,952 |
+
+**Les enseignements :**
+
+1. **Le semi-supervisé fonctionne.** Le F1 passe de 0,765 à 0,925 en validation croisée, un écart plus de deux fois supérieur aux écarts-types. Les images sans annotation humaine apportent donc une réelle valeur.
+2. **Un modèle sans aucun label humain dépasse déjà le modèle supervisé** (0,800 contre 0,765) : 1 214 étiquettes imparfaites valent mieux que 67 étiquettes parfaites.
+3. **Filtrer les labels faibles stabilise l'apprentissage** : l'écart-type est divisé par deux. C'est le principe du seuil de confiance de la pseudo-labellisation.
+4. **Les erreurs restantes sont des faux négatifs.** Le meilleur modèle manque 2 tumeurs sur 15 sans produire la moindre fausse alerte. En contexte médical, c'est le compromis à inverser : abaisser le seuil de décision permettrait de récupérer ces tumeurs au prix de quelques vérifications supplémentaires.
+
+**Les limites**, assumées et documentées dans les notebooks :
+
+- Le jeu de test ne compte que **29 images** : une erreur de plus ou de moins déplace l'accuracy de 3,5 points.
+- Le clustering de l'étape 3 sépare **d'abord les plans de coupe et les séquences d'IRM**, et seulement ensuite les tumeurs. Comme le jeu annoté présente le même déséquilibre, l'ARI (0,573) en est flatté. Son intervalle de confiance à 95 %, obtenu par bootstrap, va de 0,33 à 0,83.
+- L'augmentation de données (rotations, retournements, variations de luminosité) atténue ce biais sans le supprimer.
 
 ## Passage à l'échelle
 
@@ -84,4 +108,4 @@ Python, PyTorch / torchvision, scikit-learn, NumPy, pandas, matplotlib, seaborn.
 
 ## Statut
 
-En cours.
+Analyses terminées. Support de présentation en cours.
